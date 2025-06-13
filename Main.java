@@ -77,11 +77,11 @@ public class Main {
                     System.out.println("Cantidad total de estudiantes: " + cantidad);
                     break;
                 case 8:
-                    System.out.print("Nombre del archivo PDF (con .pdf): ");
-                    String archivoPDF = sc.nextLine();
-                    GeneradorPDF.generarPDF(archivoPDF);
-                    System.out.println("✅ PDF generado correctamente.");
+                    System.out.print("Ingresa la fecha para el reporte (ej: 2025-06-13): ");
+                    String fecha = sc.nextLine();
+                    gestor.exportarAPDF(fecha);
                     break;
+
                 case 9:
                     System.out.print("¿Conoces el nombre del estudiante a actualizar? (si/no): ");
                     String conoceNombre = sc.nextLine().trim().toLowerCase();

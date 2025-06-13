@@ -1,6 +1,10 @@
 import java.sql.*;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
 
 public class GestorEstudiantes {
 
@@ -154,28 +158,61 @@ public class GestorEstudiantes {
         }
     }
 
-public void actualizarEstudiante(String nombreActual, Estudiante actualizado) {
-    String sql = "UPDATE estudiantes SET nombre = ?, edad = ?, carrera = ? WHERE nombre = ?";
+    public void actualizarEstudiante(String nombreActual, Estudiante actualizado) {
+        String sql = "UPDATE estudiantes SET nombre = ?, edad = ?, carrera = ? WHERE nombre = ?";
 
-    try (Connection conn = SQLiteConnection.conectar();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = SQLiteConnection.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setString(1, actualizado.getNombre());
-        pstmt.setInt(2, actualizado.getEdad());
-        pstmt.setString(3, actualizado.getCarrera());
-        pstmt.setString(4, nombreActual);
+            pstmt.setString(1, actualizado.getNombre());
+            pstmt.setInt(2, actualizado.getEdad());
+            pstmt.setString(3, actualizado.getCarrera());
+            pstmt.setString(4, nombreActual);
 
-        int filas = pstmt.executeUpdate();
+            int filas = pstmt.executeUpdate();
 
-        if (filas > 0) {
-            System.out.println("✅ Estudiante actualizado correctamente.");
-        } else {
-            System.out.println("⚠️ No se encontró ningún estudiante con ese nombre.");
+            if (filas > 0) {
+                System.out.println("✅ Estudiante actualizado correctamente.");
+            } else {
+                System.out.println("⚠️ No se encontró ningún estudiante con ese nombre.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error al actualizar el estudiante: " + e.getMessage());
         }
+    }
 
-    } catch (SQLException e) {
-        System.out.println("❌ Error al actualizar el estudiante: " + e.getMessage());
+    public void exportarAPDF(String fecha) {
+        String sql = "SELECT nombre, edad, carrera FROM estudiantes";
+        String nombreArchivo = "movimientos_" + fecha.replaceAll("[^\\d]", "-") + ".pdf";
+
+        try (Connection conn = SQLiteConnection.conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            Document documento = new Document();
+            PdfWriter.getInstance(documento, new FileOutputStream(new File(nombreArchivo)));
+            documento.open();
+
+            Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Paragraph titulo = new Paragraph("📄 Reporte de Estudiantes - " + fecha, fontTitulo);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            documento.add(titulo);
+            documento.add(new Paragraph("\n"));
+
+            while (rs.next()) {
+                String linea = String.format("Nombre: %s\nEdad: %d\nCarrera: %s\n\n",
+                        rs.getString("nombre"),
+                        rs.getInt("edad"),
+                        rs.getString("carrera"));
+                documento.add(new Paragraph(linea));
+            }
+
+            documento.close();
+            System.out.println("✅ PDF generado: " + nombreArchivo);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error al generar PDF: " + e.getMessage());
+        }
     }
 }
-}
-
